@@ -1,30 +1,43 @@
-setwd("/home/sarath/R/app/denoseq")
+
 library(shiny)
-
 method <- c('DESeq2','EdgeR','NOISeq')
-
 ui <- fluidPage(
 # Application title
-  titlePanel("Denoseq"),
-# Sidebar with a slider input for number of bins 
-    sidebarLayout(
-      sidebarPanel(
-          fileInput("upload","Input the count file", accept = c(".csv", ".txt")),
-          fileInput("upload","Sample info",accept = c(".csv", ".txt")),
-          fileInput("upload","Annotation file"))),
-        navbarPage("Denoseq",
+  
+  
+       navbarPage("DENOSeq",
           navbarMenu("Method",
                      tabPanel("DESeq2"),
                      tabPanel("EdgeR"),
-                     tabPanel("NOISeq"))),
-                   
+                     tabPanel("NOISeq")),
+          
+        navbarMenu("Visualize",
+                   tabPanel("Heatmap"),
+                   tabPanel("MA plot"),
+                   tabPanel("MD plot"),
+                   tabPanel("MDS plot"),
+                   tabPanel("DE plot"),
+                   tabPanel("Venn diagram"),
+                   tabPanel("Bubble plot"),
+                   tabPanel("Volcano plot"),
+                   tabPanel("Dispersion plot"),
+                   tabPanel("PCA")),
+       navbarMenu("Results",
+                  tabPanel("View Results")),
+       navbarMenu("Download",
+         tabPanel("Download"))),
+       
+            sidebarLayout(
+              sidebarPanel(
+                fileInput("upload","Input the count file", accept = c(".csv", ".txt")),
+           fileInput("upload","Sample info",accept = c(".csv", ".txt")),
+           fileInput("upload","Annotation file")),
+        mainPanel(
+  plotOutput("distPlot"))))
+  
 
         # Show a plot of the generated distribution
-        mainPanel(
-           plotOutput("distPlot")
-        )
-    )
-)
+        
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
@@ -43,3 +56,5 @@ server <- function(input, output) {
 
 # Run the application 
 shinyApp(ui = ui, server = server)
+
+
