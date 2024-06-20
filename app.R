@@ -8,33 +8,44 @@ library(shinythemes)
 library(shinydashboard)
 library(bslib)
 
-method <- c('DESeq2', 'EdgeR', 'NOISeq')
-
 ui <- fluidPage(
-  themeSelector(),
-  theme = shinytheme("superhero"),
+  
   titlePanel("DENOSeq"),
+  
   tabsetPanel(
-    tabPanel("Upload"),
+    tabPanel("Upload",
+               fileInput("upload", "Input the count file", accept = c(".csv", ".txt",".xlsx")),
+             actionButton("reset","Reset"),
+             tableOutput("data_preview")),    
+             
     tabPanel("Differential expression",
-    selectInput("Diffrential expression", "Select Differential Expression Method", choices = c("DESeq2", "EdgeR", "NOISeq"))),
-    tabPanel("Gene Ontology")
-  ),
-  sidebarLayout(
-      sidebarPanel(
-       fileInput("upload", "Input the count file", accept = c(".csv", ".txt",".xlsx")),
-       fileInput("upload", "Input Annotation file")),
+    selectInput("diffrential_expression", "Select Differential Expression Method", choices = c("DESeq2", "EdgeR", "NOISeq")),
+    actionButton("run","Run"),
+    tableOutput("deresult")),
+    
+    tabPanel("Gene Ontology",
+             fileInput("upload", "Input Annotation file"),
+    actionButton("reset","Reset")),
+    plotOutput("goresult")),
   
       mainPanel(
-        tableOutput("contents"))))
+       ))
       
 
 server <- function(input, output) {
-  output$contents <- renderTable({
+  output$data_preview <- renderTable({
     req(input$upload)
     df <- read.csv(input$upload$datapath)
     
   })
+  
+  output$deresult <- renderTable({
+    df <- read.delim(deresult)
+  })
+  output$goresult <- renderPlot({
+    plot(goresult)
+  })
+  
   
 }
 
