@@ -1,4 +1,4 @@
-
+#new
 library(shiny)
 library(shinyBS)
 library(shinyjs)
@@ -10,8 +10,8 @@ library(shinydashboard)
 library(bslib)
 
 ui <- fluidPage(
-  titlePanel("DENOSeq"),
-  
+  titlePanel("ShinyDE"),
+  themeSelector(),
   tabsetPanel(
     tabPanel("Upload",
              fileInput("upload_counts", "Input the count file", accept = c(".csv", ".txt", ".xlsx")),
