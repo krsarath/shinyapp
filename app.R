@@ -271,7 +271,6 @@ server <- function(input, output, session) {
       })
     }
   })
-  
   observeEvent(input$run_diff_exp, {
     req(input$upload_counts)
     if (input$diffrential_expression == "NOISeq") {
@@ -292,36 +291,30 @@ server <- function(input, output, session) {
       # Filter count data to include only selected samples
       countdata <- count_data[, sample_info$sampleID, drop = FALSE]
       
-      # Filtering count data (optional steps, you can customize as per your data)
-      exprs <- as.matrix(countdata)
-      exprs <- apply(exprs, 2, function(x) {
-        if (any(is.na(x))) {
-          x[is.na(x)] <- median(x, na.rm = TRUE)
-        }
-        return(x)
-      })
-      myTMM <- tmm(exprs, long = 1000, lc = 0)
       group <- factor(sample_info$Treatment)
-      table(group)
-      myfilt <- filtered.data(countdata, factor = group, norm = TRUE, depth = NULL, method = 1, cv.cutoff = 100, cpm = 1, p.adj = "fdr")
-      mydata2 <- NOISeq::readData(data = myfilt, factors = group)
-      myresults <- noiseq(mydata2, factor = "group", k = 0, norm = "tmm", condition = c("control", "treatment"), pnr = 0.2, nss = 5, v = 0.02, lc = 1, replicates = "technical")
+      countdata <- filtered.data(countdata, factor = sample_info$Treatment, norm = TRUE, depth = NULL, method = 1, cv.cutoff = 100, cpm = 1, p.adj = "fdr")
+      mydata <- readData(data = countdata, factors = sample_info)
+      myresults <- noiseq(mydata, factor = "Treatment", k = 0, norm = "tmm", 
+                          condition = c("control", "treated"), pnr = 0.2, nss = 5, 
+                          v = 0.02, lc = 1, replicates = "technical")
       myresults.deg <- degenes(myresults, q = 0.8, M = NULL)
       myresults.deg1 <- degenes(myresults, q = 0.8, M = "up")
       myresults.deg2 <- degenes(myresults, q = 0.8, M = "down")
-      write.csv(myresults, 'myresults.csv', row.names = TRUE)
+      
+      # Extracting NOISeq results for display
+      results_df <- as.data.frame(myresults@results[[1]])
       
       output$deresult <- renderTable({
-        head(myresults)
+        head(results_df)
       })
       
       # Downloadable csv of selected dataset
       output$download_deresult <- downloadHandler(
         filename = function() {
-          paste("myresults", ".csv", sep = "")
+          paste("myresults_deg", ".csv", sep = "")
         },
         content = function(file) {
-          write.csv(myresults, file, row.names = TRUE)
+          write.csv(results_df, file, row.names = TRUE)
         }
       )
       
@@ -337,21 +330,22 @@ server <- function(input, output, session) {
           
         } else if (plot_type == "Heatmap") {
           N <- 20 
-          top_genes <- myresults.deg[order(abs(myresults.deg$ranking), decreasing = TRUE), ]
+          top_genes <- results_df[order(abs(results_df$prob), decreasing = TRUE), ]
           top_genes <- head(top_genes, N)
           top_gene_names <- rownames(top_genes)
-          top_gene_exprs <- exprs[top_gene_names, ]
-          heatmaply(top_gene_exprs, 
-                    main = "Heatmap of Top Significant Genes",
-                    xlab = "Samples", 
-                    ylab = "Genes",
-                    scale = "row",  
-                    colors = viridis::viridis(256))
+          top_gene_exprs <- countdata[top_gene_names, ]
+          pheatmap(top_gene_exprs, 
+                   main = "Heatmap of Top Significant Genes",
+                   cluster_rows = TRUE, 
+                   cluster_cols = TRUE,
+                   show_rownames = TRUE,
+                   show_colnames = TRUE,
+                   color = colorRampPalette(rev(brewer.pal(n = 7, name = "RdYlBu")))(100))
           
         } else if (plot_type == "Venn plot") {
           up <- rownames(myresults.deg1)
           down <- rownames(myresults.deg2)
-          all <- rownames(exprs)
+          all <- rownames(countdata)
           no_expression_genes <- setdiff(all, union(up, down))
           gene_sets <- list(
             UP = up,
@@ -363,6 +357,7 @@ server <- function(input, output, session) {
       })
     }
   })
+  
 }
 
 shinyApp(ui, server)
