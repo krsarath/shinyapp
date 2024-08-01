@@ -1,4 +1,4 @@
-#denoseq
+#shiny vista
 library(shiny)
 library(shinythemes)
 library(DESeq2)
@@ -7,13 +7,13 @@ library(limma)
 library(edgeR)
 library(dplyr)
 library(tidyr)
+library(readr)
+library(readxl)
 library(NOISeq)
 library(ggplot2)
 library(pheatmap)
 library(ggrepel)
-library(clusterProfiler)
-library(org.Hs.eg.db)
-library(DOSE)
+library(ggpubr)
 library(RColorBrewer)
 library(plotly)
 library(VennDiagram)
@@ -22,16 +22,14 @@ library(ggVennDiagram)
 options(shiny.maxRequestSize = 50 * 1024^2)
 
 ui <- navbarPage(
-  title = "ShinyDE",
+  title = span(img(src="shiny-vista.png", width = 120)),
   theme = shinytheme("simplex"),
   tabPanel("Upload",
            sidebarLayout(
              sidebarPanel(
-               fileInput("upload_counts", "Input the count file", accept = c(".csv", ".txt", ".xlsx")),
-               actionButton("reset_counts", "Reset"),
-               tableOutput("data_preview")
+               fileInput("upload_counts", "Input the count file", accept = c(".csv",".xlsx"))
              ),
-             mainPanel()
+             mainPanel(tableOutput("data_preview"))
            )
   ),
   tabPanel("Differential expression",
@@ -40,31 +38,55 @@ ui <- navbarPage(
                selectInput("diffrential_expression", "Select Differential Expression Method", choices = c("DESeq2", "EdgeR", "NOISeq")),
                selectInput("controls", "Select Control Samples", choices = NULL, multiple = TRUE),
                selectInput("treatments", "Select Treatment Samples", choices = NULL, multiple = TRUE),
-               selectInput("plot_type", "Visualization", choices = c("PCA", "Dispersion Plot", "MA Plot", "Heatmap", "Volcano Plot", "MDS", "BCV", "MD plot", "DE plot", "Venn plot")),
+               selectInput("plot_type", "Visualization", choices = c("PCA", "Dispersion Plot", "MA Plot", "Heatmap", "Volcano Plot", "MDS", "BCV", "MD plot", "DE plot")),
                actionButton("run_diff_exp", "Run")
              ),
              mainPanel(
                tableOutput("deresult"),
                plotOutput("diff_exp_plot"),
-               downloadButton("download_deresult", "Download")
+               downloadButton("download_deresult", "Download"),
+               downloadButton("download_plot",  "Download Plot")
              )
            )
   ),
-  tabPanel("Gene Ontology",
+  tabPanel("GO bubble Plot",
            sidebarLayout(
              sidebarPanel(
-               fileInput("upload_annotation", "Input Annotation file (Optional)", accept = c(".csv", ".txt", ".xlsx", ".gtf", ".gff")),
-               textInput("paste_gene_ids", "Or Paste Gene IDs (comma or newline separated)"),
-               selectInput("go_plot", "Choose plot type", choices = c("Dot plot", "Bar plot", "Bubble plot", "Cnet plot")),
-               actionButton("reset_annotation", "Reset"),
-               actionButton("run_go_analysis", "Run GO Analysis")
+               fileInput("deresult", "Upload DE Result", accept = c( ".csv", ".xlsx")),
+               fileInput("go_mappings", "Upload GO Terms", accept = c(".csv", ".xlsx")),
+               actionButton("run_go", "GO plot")
              ),
              mainPanel(
-               plotOutput("goresult"),
-               plotOutput("go_plot")
+               plotOutput("go_plot"),
+               downloadButton("download_plot", "Download Plot")
              )
            )
-  )
+  ),
+  tabPanel("Venn Diagram",
+        sidebarLayout(
+          sidebarPanel( fileInput("file1", "Upload csv/xlsx list 1", accept = c(".csv", ".xlsx")),
+                        textInput("name1", "listname", value = "list1"),
+                        fileInput("file2", "list 2", accept = c(".csv", ".xlsx")),
+                        textInput("name2", "listname", value = "list2"),
+                        fileInput("file3", "list 3", accept = c(".csv", ".xlsx")),
+                        textInput("name3", "listname", value = "list3"),
+                        fileInput("file4", "list 4", accept = c(".csv", ".xlsx")),
+                        textInput("name4", "listname", value = "list4"),
+                        fileInput("file5", "list 5", accept = c(".csv", ".xlsx")),
+                        textInput("name5", "listname", value = "list5"),
+                        fileInput("file6", "list 6", accept = c(".csv", ".xlsx")),
+                        textInput("name6", "listname", value = "list6"),
+                        radioButtons("regulationType", "Select Regulation Type:",
+                                     choices = list("Upregulated" = "upregulated",
+                                                    "Downregulated" = "downregulated"),
+                                     selected = "upregulated"),
+                        actionButton("plot", "Generate")
+          ),
+          mainPanel(
+            plotOutput("venn_plot"),
+            downloadButton("download_plot", "Download Plot")
+          )
+        )   )
 )
 
 server <- function(input, output, session) {
@@ -72,14 +94,25 @@ server <- function(input, output, session) {
   # Data preview
   output$data_preview <- renderTable({
     req(input$upload_counts)
-    df <- read.csv(input$upload_counts$datapath)
+    if (stringr::str_ends(input$upload_counts$datapath, "csv")) {
+      df <- read.csv(input$upload_counts$datapath)
+    } else if (stringr::str_ends(input$upload_counts$datapath, "xlsx")) {
+      df <- readxl::read_excel(input$upload_counts$datapath)
+    } 
+    
+    #df <- read.csv(input$upload_counts$datapath)
     head(df) # Display only the head for preview
   })
   
   # Update sample choices based on uploaded data
   observe({
     req(input$upload_counts)
-    df <- read.csv(input$upload_counts$datapath)
+    if (stringr::str_ends(input$upload_counts$datapath, "csv")) {
+      df <- read.csv(input$upload_counts$datapath)
+    } else if (stringr::str_ends(input$upload_counts$datapath, "xlsx")) {
+      df <- readxl::read_excel(input$upload_counts$datapath)
+    } 
+    #df <- read.csv(input$upload_counts$datapath)
     samples <- colnames(df)
     updateSelectInput(session, "controls", choices = samples)
     updateSelectInput(session, "treatments", choices = samples)
@@ -90,7 +123,12 @@ server <- function(input, output, session) {
     req(input$upload_counts)
     if (input$diffrential_expression == "DESeq2") {
       # Read count data
-      count_data <- read.csv(input$upload_counts$datapath, header = TRUE, row.names = 1)
+      if (stringr::str_ends(input$upload_counts$datapath, "csv")) {
+        count_data <- read.csv(input$upload_counts$datapath)
+      } else if (stringr::str_ends(input$upload_counts$datapath, "xlsx")) {
+        count_data <- readxl::read_excel(input$upload_counts$datapath)
+      } 
+      #count_data <- read.csv(input$upload_counts$datapath, header = TRUE, row.names = 1)
       
       # Get user-selected control and treatment samples
       controls <- input$controls
@@ -112,11 +150,13 @@ server <- function(input, output, session) {
       
       # Create DESeqDataSet
       dds <- DESeqDataSetFromMatrix(countData = round(countdata), colData = sample_info, design = ~ Treatment)
+      
       dds <- DESeq(dds)
       deseq_result <- results(dds)
       deseq_result <- as.data.frame(deseq_result)
       deseq_result <- deseq_result[order(deseq_result$pvalue),]
-      
+      deseq_result <- deseq_result %>%
+        mutate(Regulation = ifelse(log2FoldChange > 1, "upregulated", "downregulated"))
       output$deresult <- renderTable({
         head(deseq_result)
       })
@@ -157,29 +197,53 @@ server <- function(input, output, session) {
           plotPCA(vsd, intgroup = "Treatment")
           
         } else if (plot_type == "Heatmap") {
-          top_hits <- deseq_result[order(deseq_result$padj),][1:10,]
+          top_hits <- deseq_result[order(deseq_result$padj),][1:30,]
           top_hits <- row.names(top_hits)
           top_hits
           rld <- rlog(dds, blind = F)
           pheatmap(assay(rld)[top_hits,])
         } else if (plot_type == "MA Plot") {
-          resLFC <- lfcShrink(dds, coef = 2, type = 'ashr')
+          # Prepare data for ggmaplot
+          ma_data <- data.frame(
+            name = rownames(deseq_result),
+            baseMean = deseq_result$baseMean,
+            log2FoldChange = deseq_result$log2FoldChange,
+            pvalue = deseq_result$pvalue,
+            padj = deseq_result$padj
+          )
           
-          plotMA(resLFC, ylim = c(-10, 10))
+          # Create MA plot with ggmaplot
+          ggmaplot(ma_data, 
+                   #main = expression("Control" %->% "Treated"),
+                   fdr = 0.05, fc = 2, size = 0.4,
+                   #palette = c("#B31B21", "#1465AC", "darkgray"),
+                   genenames = as.vector(ma_data$name),
+                   #legend = "top", top = 20,
+                   #font.label = c("bold", 11),
+                   #font.legend = "bold",
+                   #font.main = "bold",
+                   ggtheme = ggplot2::theme_linedraw()
+          )
           
         } else if (plot_type == "Dispersion Plot") {
           plotDispEsts(dds)
         }
+        
+        
       })
     }
   })
-  
   # Run differential expression analysis for EdgeR
   observeEvent(input$run_diff_exp, {
     req(input$upload_counts)
     if (input$diffrential_expression == "EdgeR") {
       # Read count data
-      count_data <- read.csv(input$upload_counts$datapath, header = TRUE, row.names = 1)
+      if (stringr::str_ends(input$upload_counts$datapath, "csv")) {
+        count_data <- read.csv(input$upload_counts$datapath)
+      } else if (stringr::str_ends(input$upload_counts$datapath, "xlsx")) {
+        count_data <- readxl::read_excel(input$upload_counts$datapath)
+      } 
+      #count_data <- read.csv(input$upload_counts$datapath, header = TRUE, row.names = 1)
       
       # Get user-selected control and treatment samples
       controls <- input$controls
@@ -209,9 +273,10 @@ server <- function(input, output, session) {
       est_disp <- estimateDisp(dge_list, design, robust = TRUE)
       qlfit <- glmQLFit(dge_list, design, robust = TRUE)
       qlftest <- glmQLFTest(qlfit)
-      qlftest <- as.data.frame(topTags(qlftest))
+      qlftest <- as.data.frame(topTags(qlftest,n = nrow(dge_list)))
       qlftest <- qlftest[order(qlftest$PValue),]
-      
+      qlftest <- qlftest %>%
+        mutate(Regulation = ifelse(logFC > 1, "upregulated", "downregulated"))
       output$deresult <- renderTable({
         head(qlftest)
       })
@@ -265,7 +330,7 @@ server <- function(input, output, session) {
           plotQLDisp(qlfit)
           
         } else if (plot_type == "Heatmap") {
-          logcpm <- cpm(dge_list, log=TRUE)
+          logcpm <- cpm(dge_list, log = TRUE)
           heatmap(logcpm)
         }
       })
@@ -275,8 +340,13 @@ server <- function(input, output, session) {
   observeEvent(input$run_diff_exp, {
     req(input$upload_counts)
     if (input$diffrential_expression == "NOISeq") {
+      if (stringr::str_ends(input$upload_counts$datapath, "csv")) {
+        count_data <- read.csv(input$upload_counts$datapath)
+      } else if (stringr::str_ends(input$upload_counts$datapath, "xlsx")) {
+        count_data <- readxl::read_excel(input$upload_counts$datapath)
+      } 
       # Read count data
-      count_data <- read.csv(input$upload_counts$datapath, header = TRUE, row.names = 1)
+      #count_data <- read.csv(input$upload_counts$datapath, header = TRUE, row.names = 1)
       
       # Get user-selected control and treatment samples
       controls <- input$controls
@@ -292,36 +362,31 @@ server <- function(input, output, session) {
       # Filter count data to include only selected samples
       countdata <- count_data[, sample_info$sampleID, drop = FALSE]
       
-      # Filtering count data (optional steps, you can customize as per your data)
-      exprs <- as.matrix(countdata)
-      exprs <- apply(exprs, 2, function(x) {
-        if (any(is.na(x))) {
-          x[is.na(x)] <- median(x, na.rm = TRUE)
-        }
-        return(x)
-      })
-      myTMM <- tmm(exprs, long = 1000, lc = 0)
       group <- factor(sample_info$Treatment)
-      table(group)
-      myfilt <- filtered.data(countdata, factor = group, norm = TRUE, depth = NULL, method = 1, cv.cutoff = 100, cpm = 1, p.adj = "fdr")
-      mydata2 <- NOISeq::readData(data = myfilt, factors = group)
-      myresults <- noiseq(mydata2, factor = "group", k = 0, norm = "tmm", condition = c("control", "treatment"), pnr = 0.2, nss = 5, v = 0.02, lc = 1, replicates = "technical")
+      countdata <- filtered.data(countdata, factor = sample_info$Treatment, norm = TRUE, depth = NULL, method = 1, cv.cutoff = 100, cpm = 1, p.adj = "fdr")
+      mydata <- readData(data = countdata, factors = sample_info)
+      myresults <- noiseq(mydata, factor = "Treatment", k = 0, norm = "tmm", 
+                          condition = c("control", "treated"), pnr = 0.2, nss = 5, 
+                          v = 0.02, lc = 1, replicates = "technical")
       myresults.deg <- degenes(myresults, q = 0.8, M = NULL)
       myresults.deg1 <- degenes(myresults, q = 0.8, M = "up")
       myresults.deg2 <- degenes(myresults, q = 0.8, M = "down")
-      write.csv(myresults, 'myresults.csv', row.names = TRUE)
       
+      # Extracting NOISeq results for display
+      results_df <- as.data.frame(myresults@results[[1]])
+      results_df <- results_df %>%
+        mutate(Regulation = ifelse(M > 1, "upregulated", "downregulated"))
       output$deresult <- renderTable({
-        head(myresults)
+        head(results_df)
       })
       
       # Downloadable csv of selected dataset
       output$download_deresult <- downloadHandler(
         filename = function() {
-          paste("myresults", ".csv", sep = "")
+          paste("myresults_deg", ".csv", sep = "")
         },
         content = function(file) {
-          write.csv(myresults, file, row.names = TRUE)
+          write.csv(results_df, file, row.names = TRUE)
         }
       )
       
@@ -336,33 +401,125 @@ server <- function(input, output, session) {
           DE.plot(myresults, q = 0.8, graphic = "expr", log.scale = TRUE)
           
         } else if (plot_type == "Heatmap") {
-          N <- 20 
-          top_genes <- myresults.deg[order(abs(myresults.deg$ranking), decreasing = TRUE), ]
+          N <- 20
+          top_genes <- results_df[order(abs(results_df$prob), decreasing = TRUE), ]
           top_genes <- head(top_genes, N)
           top_gene_names <- rownames(top_genes)
-          top_gene_exprs <- exprs[top_gene_names, ]
-          heatmaply(top_gene_exprs, 
-                    main = "Heatmap of Top Significant Genes",
-                    xlab = "Samples", 
-                    ylab = "Genes",
-                    scale = "row",  
-                    colors = viridis::viridis(256))
+          top_gene_exprs <- countdata[top_gene_names, ]
+          pheatmap(top_gene_exprs,
+                   main = "Heatmap of Top Significant Genes",
+                   cluster_rows = TRUE,
+                   cluster_cols = TRUE,
+                   show_rownames = TRUE,
+                   show_colnames = TRUE,
+                   color = colorRampPalette(rev(brewer.pal(n = 7, name = "RdYlBu")))(100))
           
-        } else if (plot_type == "Venn plot") {
-          up <- rownames(myresults.deg1)
-          down <- rownames(myresults.deg2)
-          all <- rownames(exprs)
-          no_expression_genes <- setdiff(all, union(up, down))
-          gene_sets <- list(
-            UP = up,
-            DOWN = down,
-            ALL = no_expression_genes
-          )
-          ggVennDiagram(gene_sets, label_alpha = 0)
-        }
+        } 
+        
       })
     }
   })
+  go_plot_data <- reactive({
+    req(input$deresult, input$go_mappings)
+    
+    result_de <- read.csv(input$deresult$datapath)
+    term_GO <- read.csv(input$go_mappings$datapath)
+    
+    # Merge data
+    merged_data <- inner_join(term_GO, result_de, by = "gene_id")
+    
+    # Calculate the count of genes per GO category
+    merged_data <- merged_data %>%
+      mutate(Regulation = ifelse(log2FoldChange > 0, "Up", "Down")) %>%
+      group_by(category_id, Regulation) %>%
+      summarise(count = n(),
+                log2FoldChange = mean(log2FoldChange),
+                pvalue = mean(pvalue)) %>%
+      ungroup()
+    
+    # Select top N categories by count of genes
+    top_categories <- merged_data %>%
+      group_by(category_id) %>%
+      summarise(total_count = sum(count)) %>%
+      top_n(n = 50, wt = total_count) %>%
+      pull(category_id)
+    
+    # Filter data to include only the top N categories
+    filtered_data <- merged_data %>% filter(category_id %in% top_categories)
+    
+    return(filtered_data)
+  })
+  
+  output$go_plot <- renderPlot({
+    filtered_data <- go_plot_data()
+    
+    ggplot(filtered_data, aes(x = -log10(pvalue), y = category_id, size = count, color = Regulation)) +
+      geom_point(alpha = 0.7) +
+      scale_size_continuous(range = c(2, 12)) +  # Adjust size range as needed
+      scale_color_manual(values = c("Up" = "orange", "Down" = "purple")) +  # Color for up/down regulation
+      labs(x = "-log10(P-Value)", y = "Significant GOs", size = "Count", color = "Regulation") +
+      theme_minimal()  # Adjust theme as per your preference
+  })
+  
+  output$download_plot <- downloadHandler(
+    filename = function() {
+      paste("go_plot", ".png", sep = "")
+    },
+    content = function(file) {
+      filtered_data <- go_plot_data()
+      
+      ggsave(file, plot = ggplot(filtered_data, aes(x = -log10(pvalue), y = category_id, size = count, color = Regulation)) +
+               geom_point(alpha = 0.7) +
+               scale_size_continuous(range = c(2, 12)) +  # Adjust size range as needed
+               scale_color_manual(values = c("Up" = "orange", "Down" = "purple")) +  # Color for up/down regulation
+               labs(x = "-log10(P-Value)", y = "Significant GOs", size = "Count", color = "Regulation") +
+               theme_light(), width = 12, height = 8, units = "in", device = "png")
+    }
+  )
+  data <- reactive({
+    files <- list(input$file1, input$file2, input$file3, input$file4, input$file5, input$file6 )
+    valid_files <- files[!sapply(files, is.null)]
+    
+    data_list <- lapply(valid_files, function(file) {
+      ext <- tools::file_ext(file$datapath)
+      if (ext == "csv") {
+        read_csv(file$datapath)
+      } else if (ext == "xlsx") {
+        read_excel(file$datapath)
+      }
+    })
+    custom_names <- c(input$name1, input$name2, input$name3, input$name4, input$name5, input$name6)
+    names(data_list) <- custom_names[seq_along(data_list)]
+    data_list
+    
+  })
+  
+  output$venn_plot <- renderPlot({
+    req(input$plot)
+    
+    data_list <- data()
+    regulation_type <- input$regulationType
+    
+    gene_lists <- lapply(data_list, function(df) {
+      if ("Regulation" %in% colnames(df) && "gene_id" %in% colnames(df)) {
+        df %>%
+          filter(Regulation == regulation_type) %>%
+          pull(gene_id)
+      } else {
+        character(0)
+      }
+    })
+    
+    names(gene_lists) <- names(data_list)
+    
+    venn <- ggVennDiagram(gene_lists, label_alpha = 0, category.names = names(data_list)) +
+      theme(legend.position = "right") +
+      scale_fill_gradient(low = "red", high = "green")
+    
+    print(venn)
+  })
+  
 }
 
 shinyApp(ui, server)
+
