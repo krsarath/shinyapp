@@ -189,7 +189,7 @@ server <- function(input, output, session) {
             geom_hline(yintercept = -log10(0.05), col = "gray", linetype = 'dashed') +
             geom_point(size = 2) +
             geom_text_repel() +
-            scale_color_manual(values = c('blue', 'red'), labels = c("Downregulated", "Not significant", "Upregulated")) +
+            scale_color_manual(values = c('blue', 'red'), labels = c("Downregulated", "Upregulated", "Not significant")) +
             theme(text = element_text(size = 20))
           
         } else if (plot_type == "PCA") {
