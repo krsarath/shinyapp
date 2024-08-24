@@ -1,7 +1,7 @@
 # Shiny ViSTA
 
-A Web-Application provides Differential Expression Analysis and Transcritome data visualization specifically tailored for Genomic Research
-Authors : Dr. J. Sreekumar and Sarath kumar R.
+A Web-Application provides Differential Expression Analysis and Transcriptome data visualization specifically tailored for Genomic Research
+Authors : Sarath kumar R and Dr. J. Sreekumar.
 
 Institution : ICAR-Central Tuber Crops Research Institute
 
