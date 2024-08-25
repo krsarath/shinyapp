@@ -60,7 +60,10 @@ Example datasets are included in the data directory to help you get started.[mat
 
 # License
 
-This project is licensed under the MIT License - see the LICENSE file for details.[LICENSE](url)
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/krsarath/shinyapp/blob/main/LICENSE)
+
 
 # Contact
 
