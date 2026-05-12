@@ -12,4 +12,4 @@ Open a GitHub issue with the label "enhancement".
 3. Run shiny::runApp() to launch locally
 
 ## Contact
-sarath@[youremail] or open a GitHub issue.
+krsarath20@gmail.com or open a GitHub issue.
