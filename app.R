@@ -1,4 +1,4 @@
-#denoseq
+#shinyvista
 library(shiny)
 library(shinythemes)
 library(DESeq2)
