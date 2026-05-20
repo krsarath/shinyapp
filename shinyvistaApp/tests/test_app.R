@@ -1,7 +1,7 @@
 library(testthat)
 
-app_dir <- "shinyvistaApp"
-repo_dir <- "."
+app_dir <- ".."
+repo_dir <- "../.."
 
 test_that("app.R file exists in repository", {
   expect_true(file.exists(file.path(app_dir, "app.R")))
