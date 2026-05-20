@@ -45,9 +45,10 @@ without writing any code.
 
 Clone the repository and navigate to the project directory:
 
-``bash
-- git clone https://github.com/krsarath/shinyapp.git
-- cd shinyapp
+```bash
+git clone https://github.com/krsarath/shinyapp.git
+cd shinyapp/shinyvistaApp
+```
 
 # Install the required packages
 ```r
@@ -61,7 +62,9 @@ BiocManager::install(c("DESeq2", "edgeR", "NOISeq"))
 #  Running the App
 
 To run the app locally, use the following R command
-shiny::runApp('path_to_your_app_directory')
+```r
+shiny::runApp()
+```
 
 
 
