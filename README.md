@@ -109,7 +109,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 # Contact
 
-For any questions or issues, please contact
+For questions or issues, please open a [GitHub issue](https://github.com/krsarath/shinyapp/issues) or contact via:
 
 [![Gmail](https://img.shields.io/badge/Sarath_Kumar_R-DB4437?style=for-the-badge&logo=Gmail&logoColor=white)](mailto:krsarath20@gmail.com) [![LinkedIn](https://img.shields.io/badge/Sarath_Kumar_R-0A66C2?style=for-the-badge&logo=LinkedIn&logoColor=white)](https://www.linkedin.com/in/sarathkr/)
 
