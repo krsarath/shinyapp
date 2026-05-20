@@ -3,7 +3,7 @@
 [![](https://img.shields.io/badge/Shiny-shinyapps.io-blue?style=flat&labelColor=white&logo=RStudio&logoColor=blue)](https://matt.dray.shinyapps.io/randoflag/)
 # Shiny VISTA
 
-# A Web-Application provides Differential Expression Analysis and Transcriptome data visualization 
+# An R Shiny Web-Application for Differential Expression Analysis and Transcriptome data visualization 
 
 This R Shiny web application allows users to perform differential expression analysis and visualize transcriptome data, making it easier to interpret gene expression patterns. The app supports uploading CSV/XLSX files, performing statistical analysis, and generating various plots to aid in the analysis.
 
@@ -69,7 +69,7 @@ shiny::runApp('path_to_your_app_directory')
 
 - Upload RNA-seq Count File: Use the 'Upload' tab to select your count file.
 - Perform Differential Expression Analysis: Navigate to the 'Differential Expression' tab, choose your settings, and click 'Run'.
-- Visualize GO Terms: In the 'GO Bubble Plot' tab, upload your DE results and GO files, then generate the plot.
+- Perform Gene Ontology enrichment visualization: In the 'GO Bubble Plot' tab, upload your DE results and GO files, then generate the plot.
 - Create Venn Diagrams: Use the 'Venn Diagram' tab to upload multiple DE result files and compare them visually.
 - View Results: Explore the generated plots and tables.
 - Download: Export the results and plots for further analysis.
