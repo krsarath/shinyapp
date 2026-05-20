@@ -1,6 +1,6 @@
 [![R tests](https://github.com/krsarath/shinyapp/actions/workflows/r-test.yml/badge.svg)](https://github.com/krsarath/shinyapp/actions/workflows/r-test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Shiny App](https://img.shields.io/badge/Shiny-Live_App-blue?logo=RStudio)](https://krsarath.shinyapps.io/shinyvistaApp/)
+[![Shiny App](https://img.shields.io/badge/Shiny-vista-blue?logo=RStudio)](https://krsarath.shinyapps.io/shinyvistaApp/)
 # Shiny VISTA
 
 # An R Shiny Web-Application for Differential Expression Analysis and Transcriptome data visualization 
