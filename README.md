@@ -1,3 +1,5 @@
+[![R tests](https://github.com/krsarath/shinyapp/actions/workflows/r-test.yml/badge.svg)](https://github.com/krsarath/shinyapp/actions/workflows/r-test.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![](https://img.shields.io/badge/Shiny-shinyapps.io-blue?style=flat&labelColor=white&logo=RStudio&logoColor=blue)](https://matt.dray.shinyapps.io/randoflag/)
 # Shiny VISTA
 
@@ -7,6 +9,17 @@ This R Shiny web application allows users to perform differential expression ana
 
 - Authors : Sarath kumar R and Dr. J. Sreekumar.
 - Website : https://krsarath.shinyapps.io/shinyvistaApp/ shinyvista Ver. 1.0
+
+## Statement of Need
+
+DGE analysis of RNA-seq data requires proficiency in R programming 
+and Bioconductor, limiting accessibility for wet-lab researchers 
+without bioinformatics support. Most existing web tools support 
+only a single statistical method. Shiny Vista provides a unified, 
+installation-free interface integrating DESeq2, edgeR, and NOISeq, 
+enabling wet-lab biologists, plant scientists, and students to 
+perform multi-method DGE analysis and cross-method validation 
+without writing any code.
 
 ## Features
 
@@ -18,6 +31,7 @@ This R Shiny web application allows users to perform differential expression ana
   - Heatmaps
   - Venn diagrams
 - **Downloadable Results**: Export analysis results and plots.
+- **GO Enrichment Analysis**: Bubble plot visualisation of enriched biological processes
 
 ## Getting Started
 
@@ -36,7 +50,13 @@ Clone the repository and navigate to the project directory:
 - cd shinyapp
 
 # Install the required packages
-install.packages(c("shiny", "ggplot2", "DESeq2", "edgeR", "Noiseq", "dplyr", "shinyWidgets", "readxl", "readr"))
+```r
+install.packages(c("shiny", "ggplot2", "dplyr", "shinyWidgets", 
+                   "readxl", "readr", "ggVennDiagram", "pheatmap"))
+
+if (!require("BiocManager")) install.packages("BiocManager")
+BiocManager::install(c("DESeq2", "edgeR", "NOISeq"))
+```
 
 #  Running the App
 
@@ -59,6 +79,24 @@ shiny::runApp('path_to_your_app_directory')
 
 Example datasets are included in the data directory to help you get started.[matrix.counts (copy).zip](url)
 
+## Validation
+
+Validated using the *Drosophila melanogaster* RNA-seq benchmark 
+dataset (GEO: GSE18508; Brooks et al., 2011):
+
+- DESeq2: 8,131 DEGs
+- edgeR: 7,084 DEGs  
+- NOISeq: 2,282 DEGs (conservative high-confidence subset)
+
+## Citation
+
+If you use Shiny Vista, please cite:
+
+> Sarath Kumar R., J. Sreekumar. Shiny Vista: A Web-Based R Shiny 
+> Application for Streamlined Differential Expression Analysis and 
+> Interactive Visualization of Transcriptome Data. 2026.  
+> https://github.com/krsarath/shinyapp
+
 # License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
@@ -70,7 +108,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 For any questions or issues, please contact
 
-[![Gmail](https://img.shields.io/badge/Sarath_Kumar_R-DB4437?style=for-the-badge&logo=Gmail&logoColor=white)](mailto:akhilsarath37@gmail.com) [![LinkedIn](https://img.shields.io/badge/Sarath_Kumar_R-0A66C2?style=for-the-badge&logo=LinkedIn&logoColor=white)](https://www.linkedin.com/in/sarathkr/)
+[![Gmail](https://img.shields.io/badge/Sarath_Kumar_R-DB4437?style=for-the-badge&logo=Gmail&logoColor=white)](mailto:krsarath20@gmail.com) [![LinkedIn](https://img.shields.io/badge/Sarath_Kumar_R-0A66C2?style=for-the-badge&logo=LinkedIn&logoColor=white)](https://www.linkedin.com/in/sarathkr/)
 
 
 
