@@ -3,7 +3,7 @@
 [![Shiny App](https://img.shields.io/badge/Shiny-vista-blue?logo=RStudio)](https://krsarath.shinyapps.io/shinyvistaApp/)
 # Shiny VISTA
 
-# An R Shiny Web-Application for Differential Expression Analysis and Transcriptome data visualization 
+# Shiny Vista: An Integrated Web Platform for Comparative Differential Expression Analysis Using DESeq2, edgeR, and NOISeq 
 
 This R Shiny web application allows users to perform differential expression analysis and visualize transcriptome data, making it easier to interpret gene expression patterns. The app supports uploading CSV/XLSX files, performing statistical analysis, and generating various plots to aid in the analysis.
 
@@ -95,9 +95,7 @@ dataset (GEO: GSE18508; Brooks et al., 2011):
 
 If you use Shiny Vista, please cite:
 
-> Sarath Kumar R., J. Sreekumar. Shiny Vista: A Web-Based R Shiny 
-> Application for Streamlined Differential Expression Analysis and 
-> Interactive Visualization of Transcriptome Data. 2026.  
+> Sarath Kumar R., J. Sreekumar. Shiny Vista: An Integrated Web Platform for Comparative Differential Expression Analysis Using DESeq2, edgeR, and NOISeq. 2026.  
 > https://github.com/krsarath/shinyapp
 
 # License
